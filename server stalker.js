@@ -28,8 +28,14 @@ function getOnlinePlayers() {
             });
 
             // Write online player names to file with timestamps
-            const timestamp = new Date().toISOString();
-            const log = `Timestamp: ${timestamp}\nOnline Players: ${onlinePlayers.join(', ')}\n\n`;
+            const timestamp = new Date();
+            timestamp.setHours(timestamp.getHours() + 2);
+
+            // Convert onlinePlayers array to a string representation with line breaks
+            const onlinePlayersString = onlinePlayers.map(player => JSON.stringify({ uuid: player.uuid, name_raw: player.name_raw })).join('\n');
+
+            const log = `Timestamp: ${timestamp.toISOString()}\nOnline Players:\n${onlinePlayersString}\n\n`;
+
             fs.appendFile(path.join(__dirname, 'log.txt'), log, (err) => {
                 if (err) {
                     console.error('Error writing to log file:', err);
@@ -54,7 +60,7 @@ function arraysAreEqual(arr1, arr2) {
     }
 
     for (let i = 0; i < arr1.length; i++) {
-        if (arr1[i] !== arr2[i]) {
+        if (arr1[i].uuid !== arr2[i].uuid || arr1[i].name_raw !== arr2[i].name_raw) {
             return false;
         }
     }
