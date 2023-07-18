@@ -13,12 +13,10 @@ function getOnlinePlayers() {
             // Accessing the list of online players
             const onlinePlayers = data.players.list;
 
-            if (previousPlayerList.length === 0) {
-                // Save the player list for the first time
-                savePlayerList(onlinePlayers);
-            } else if (!arraysAreEqual(onlinePlayers, previousPlayerList)) {
-                // Check if the player list has changed
-                savePlayerList(onlinePlayers);
+            // Check if the player list has changed
+            if (arraysAreEqual(onlinePlayers, previousPlayerList)) {
+                console.log('Player list has not changed. Skipping save.');
+                return;
             }
 
             // Update the previous player list
@@ -28,28 +26,24 @@ function getOnlinePlayers() {
             onlinePlayers.forEach(player => {
                 console.log(player);
             });
+
+            // Write online player names to file with timestamps
+            const timestamp = new Date().toISOString();
+            const log = `Timestamp: ${timestamp}\nOnline Players: ${onlinePlayers.join(', ')}\n\n`;
+            fs.appendFile(path.join(__dirname, 'log.txt'), log, (err) => {
+                if (err) {
+                    console.error('Error writing to log file:', err);
+                }
+            });
         })
         .catch(error => {
             console.error('Error:', error);
         });
 }
 
-function savePlayerList(playerList) {
-    // Filter the list of online players
-    const onlinePlayerNames = playerList.map(player => player.username);
-
-    // Write online player names to file with timestamps
-    const timestamp = new Date().toISOString();
-    const log = `Timestamp: ${timestamp}\nOnline Players: ${onlinePlayerNames.join(', ')}\n\n`;
-    fs.appendFile(path.join(__dirname, 'log.txt'), log, (err) => {
-        if (err) {
-            console.error('Error writing to log file:', err);
-        }
-    });
-}
-
 // Call the function immediately
 getOnlinePlayers();
+console.log('Program started.');
 
 // Repeat the function every 2 minutes
 setInterval(getOnlinePlayers, 2 * 60 * 1000);
