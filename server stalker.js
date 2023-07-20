@@ -3,9 +3,23 @@ const fs = require('fs');
 const path = require('path');
 
 const url = 'https://api.mcstatus.io/v2/status/java/23.109.136.22:25578';
-let previousPlayerList = [];
 
 function getOnlinePlayers() {
+    // Read the previous player list from the log file
+    const logFilePath = path.join(__dirname, 'log.txt');
+    let previousPlayerList = [];
+    if (fs.existsSync(logFilePath)) {
+        const logContent = fs.readFileSync(logFilePath, 'utf8');
+        const logLines = logContent.trim().split('\n');
+        if (logLines.length > 0) {
+            const lastLine = logLines[logLines.length - 1];
+            const previousListMatch = lastLine.match(/Online Players:\n(.+)/);
+            if (previousListMatch) {
+                previousPlayerList = previousListMatch[1].split('\n').map(player => JSON.parse(player));
+            }
+        }
+    }
+
     axios.get(url)
         .then(response => {
             const data = response.data;
@@ -18,9 +32,6 @@ function getOnlinePlayers() {
                 console.log('Player list has not changed. Skipping save.');
                 return;
             }
-
-            // Update the previous player list
-            previousPlayerList = onlinePlayers;
 
             console.log('Online Players:');
             onlinePlayers.forEach(player => {
@@ -36,7 +47,7 @@ function getOnlinePlayers() {
 
             const log = `Timestamp: ${timestamp.toISOString()}\nOnline Players:\n${onlinePlayersString}\n\n`;
 
-            fs.appendFile(path.join(__dirname, 'log.txt'), log, (err) => {
+            fs.appendFile(logFilePath, log, (err) => {
                 if (err) {
                     console.error('Error writing to log file:', err);
                 }
